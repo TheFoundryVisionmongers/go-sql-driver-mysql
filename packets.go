@@ -299,6 +299,9 @@ func (mc *mysqlConn) writeHandshakeResponsePacket(authResp []byte, plugin string
 	if mc.cfg.MultiStatements {
 		clientFlags |= clientMultiStatements
 	}
+	if mc.cfg.SessionTrack {
+		clientFlags |= clientSessionTrack
+	}
 
 	// encode length of the auth plugin data
 	var authRespLEIBuf [9]byte
