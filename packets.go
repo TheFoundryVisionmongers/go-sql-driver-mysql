@@ -697,8 +697,7 @@ func (mc *okHandler) handleOkPacket(data []byte) error {
 		data = data[min(n, len(data)):]
 
 		// session state information
-		n = mc.handleSessionStateChanges(data)
-		data = data[min(n, len(data)):]
+		mc.handleSessionStateChanges(data)
 	}
 
 	return nil
