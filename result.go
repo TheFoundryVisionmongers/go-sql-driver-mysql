@@ -37,6 +37,16 @@ type Result interface {
 	AllLastGTIDs() []string
 }
 
+// ResultGetter exposes the result of the last statement executed using a connection.
+//
+// This is accessible using sql.Conn.Raw() and downcasting the connection:
+//
+//	res := conn.Raw().(mysql.ResultGetter).LastResult()
+type ResultGetter interface {
+	// LastResult returns the result of the statement last executed using this connection.
+	LastResult() driver.Result
+}
+
 type mysqlResult struct {
 	// One entry in both slices is created for every executed statement result.
 	affectedRows []int64
