@@ -661,16 +661,19 @@ func (mc *mysqlConn) clearResult() *okHandler {
 // Ok Packet
 // http://dev.mysql.com/doc/internals/en/generic-response-packets.html#packet-OK_Packet
 func (mc *okHandler) handleOkPacket(data []byte) error {
-	var n, m int
+	var n int
 	var affectedRows, insertId uint64
 
 	// 0x00 [1 byte]
+	data = data[1:]
 
 	// Affected rows [Length Coded Binary]
-	affectedRows, _, n = readLengthEncodedInteger(data[1:])
+	affectedRows, _, n = readLengthEncodedInteger(data)
+	data = data[n:]
 
 	// Insert id [Length Coded Binary]
-	insertId, _, m = readLengthEncodedInteger(data[1+n:])
+	insertId, _, n = readLengthEncodedInteger(data)
+	data = data[n:]
 
 	// Update for the current statement result (only used by
 	// readResultSetHeaderPacket).
@@ -682,14 +685,54 @@ func (mc *okHandler) handleOkPacket(data []byte) error {
 	}
 
 	// server_status [2 bytes]
-	mc.status = readStatus(data[1+n+m : 1+n+m+2])
-	if mc.status&statusMoreResultsExists != 0 {
-		return nil
-	}
+	mc.status = readStatus(data)
+	data = data[2:]
 
 	// warning count [2 bytes]
+	data = data[2:]
+
+	if mc.cfg.SessionTrack && mc.status&statusSessionStateChanged > 0 {
+		// human-readable status information
+		_, _, n, _ = readLengthEncodedString(data)
+		data = data[min(n, len(data)):]
+
+		// session state information
+		n = mc.handleSessionStateChanges(data)
+		data = data[min(n, len(data)):]
+	}
 
 	return nil
+}
+
+func (mc *okHandler) handleSessionStateChanges(data []byte) int {
+	changeList, _, n, _ := readLengthEncodedString(data)
+
+	for len(changeList) > 0 {
+		// - enum_session_state_type [1 byte]
+		// - full change entry length [len coded int]
+		// - GTID encoding specification [len coded int]
+		// - GTID [len coded string]
+		changeType := sessionStateType(changeList[0])
+		changeList = changeList[1:]
+
+		change, _, changeLength, _ := readLengthEncodedString(changeList)
+		changeList = changeList[min(changeLength, len(changeList)):]
+		if changeType != sessionTrackGtids {
+			continue
+		}
+
+		// encoding specification is unused (always 0), just skip past it
+		// see: https://github.com/mysql/mysql-server/blob/056a391cdc1af9b17b5415aee243483d1bac532d/sql-common/client.cc#L1014-L1017
+		_, _, encodingSpecLength := readLengthEncodedInteger(change)
+		change = change[min(encodingSpecLength, len(change)):]
+
+		gtid, _, _, _ := readLengthEncodedString(change)
+		if len(gtid) > 0 {
+			mc.result.gtids = append(mc.result.gtids, string(gtid))
+		}
+	}
+
+	return n
 }
 
 // Read Packets as Field Packets until EOF-Packet or an Error appears
