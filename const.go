@@ -190,3 +190,14 @@ const (
 	cachingSha2PasswordFastAuthSuccess           = 3
 	cachingSha2PasswordPerformFullAuthentication = 4
 )
+
+type sessionStateType byte
+
+const (
+	sessionTrackSystemVariables sessionStateType = iota
+	sessionTrackSchema
+	sessionTrackStateChange
+	sessionTrackGtids
+	sessionTrackTransactionCharacteristics
+	sessionTrackTransactionState
+)

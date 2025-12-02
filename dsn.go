@@ -71,6 +71,7 @@ type Config struct {
 	MultiStatements          bool // Allow multiple statements in one query
 	ParseTime                bool // Parse time values to time.Time
 	RejectReadOnly           bool // Reject read-only connections
+	SessionTrack             bool // Track session changes.
 
 	// unexported fields. new options should be come here.
 	// boolean first. alphabetical order.
@@ -342,6 +343,10 @@ func (cfg *Config) FormatDSN() string {
 		writeDSNParam(&buf, &hasParam, "multiStatements", "true")
 	}
 
+	if cfg.SessionTrack {
+		writeDSNParam(&buf, &hasParam, "sessionTrack", "true")
+	}
+
 	if cfg.ParseTime {
 		writeDSNParam(&buf, &hasParam, "parseTime", "true")
 	}
@@ -586,6 +591,14 @@ func parseDSNParams(cfg *Config, params string) (err error) {
 		case "multiStatements":
 			var isBool bool
 			cfg.MultiStatements, isBool = readBool(value)
+			if !isBool {
+				return errors.New("invalid bool value: " + value)
+			}
+
+		// multiple statements in one query
+		case "sessionTrack":
+			var isBool bool
+			cfg.SessionTrack, isBool = readBool(value)
 			if !isBool {
 				return errors.New("invalid bool value: " + value)
 			}

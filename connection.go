@@ -717,5 +717,10 @@ func (mc *mysqlConn) IsValid() bool {
 	return !mc.closed.Load() && !mc.buf.busy()
 }
 
+// LastResult implements ResultGetter interface.
+func (mc *mysqlConn) LastResult() driver.Result {
+	return &mc.result
+}
+
 var _ driver.SessionResetter = &mysqlConn{}
 var _ driver.Validator = &mysqlConn{}

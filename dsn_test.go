@@ -30,6 +30,9 @@ var testDSNs = []struct {
 	"username:password@protocol(address)/dbname?param=value&columnsWithAlias=true&multiStatements=true",
 	&Config{User: "username", Passwd: "password", Net: "protocol", Addr: "address", DBName: "dbname", Params: map[string]string{"param": "value"}, Loc: time.UTC, MaxAllowedPacket: defaultMaxAllowedPacket, Logger: defaultLogger, AllowNativePasswords: true, CheckConnLiveness: true, ColumnsWithAlias: true, MultiStatements: true},
 }, {
+	"username:password@protocol(address)/dbname?param=value&columnsWithAlias=true&multiStatements=true&sessionTrack=true",
+	&Config{User: "username", Passwd: "password", Net: "protocol", Addr: "address", DBName: "dbname", Params: map[string]string{"param": "value"}, Loc: time.UTC, MaxAllowedPacket: defaultMaxAllowedPacket, Logger: defaultLogger, AllowNativePasswords: true, CheckConnLiveness: true, ColumnsWithAlias: true, MultiStatements: true, SessionTrack: true},
+}, {
 	"user@unix(/path/to/socket)/dbname?charset=utf8",
 	&Config{User: "user", Net: "unix", Addr: "/path/to/socket", DBName: "dbname", charsets: []string{"utf8"}, Loc: time.UTC, MaxAllowedPacket: defaultMaxAllowedPacket, Logger: defaultLogger, AllowNativePasswords: true, CheckConnLiveness: true},
 }, {
